@@ -293,8 +293,8 @@ def handle_events():
 def main():
     height_between_planes = 3
     # add 26x4 planes
-    for row in range(26):
-        for c in range(4):
+    for row in range(4):
+        for c in range(26):
             add_plane(c*2, 0 + row*height_between_planes, 0, 2)
             add_plane(c*2, 0 + row*height_between_planes, 1, 2)
             add_plane(c*2, 0 + row*height_between_planes, 2, 2)
