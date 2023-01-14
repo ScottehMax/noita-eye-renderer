@@ -12,7 +12,7 @@ import numpy as np
 from math import sin, cos
 
 pygame.init()
-window = pygame.display.set_mode((1000, 800))
+window = pygame.display.set_mode((1100, 800))
 clock = pygame.time.Clock()
 
 eyes = [
@@ -62,6 +62,9 @@ eye_pattern = {
     4: [0, 1], # left
 }
 
+# order to display each eye in a trigram
+eye_order = [0, 1, 2]
+
 
 def add_eye(x, y, z, eye, size, height):
     """Adds an eye at the given coordinates.
@@ -76,10 +79,11 @@ def add_eye(x, y, z, eye, size, height):
     """
     eye = [list(map(int, i)) for i in eye]
     for i in range(len(eye)):
+        j = eye_order[i]
         # lookup the pattern
-        pattern = eye_pattern[eye[i][0]]
+        pattern = eye_pattern[eye[j][0]]
         # add the point
-        eye_points.append([[x + pattern[0]], [y + pattern[1]], [z + (2-i)*height], (0, 0, 255)])
+        eye_points.append([[x + pattern[0]], [y + pattern[1]], [z + (2-j)*height], (0, 0, 255)])
     # add 2 lines, connecting the points
     eye_lines.append([len(eye_points) - 3, len(eye_points) - 2])
     eye_lines.append([len(eye_points) - 2, len(eye_points) - 1])
@@ -89,9 +93,9 @@ def add_eye(x, y, z, eye, size, height):
 # projects a 3d point to 2d for display
 proj_matrix = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 0]])
 
-
-scale = 40
+scale = 20
 origin = [400, 400]
+
 
 def draw_points_and_lines(a_x, a_y, a_z):
     """Draws all points and lines.
@@ -115,7 +119,7 @@ def draw_points_and_lines(a_x, a_y, a_z):
             x = point_2d[0][0] * scale + origin[0]
             y = point_2d[1][0] * scale + origin[1]
             pygame.draw.circle(window, color, (x, y), 2)
-    
+
     for line in lines:
         # same rotation as above
         *p1, color = points[line[0]]
@@ -136,7 +140,7 @@ def draw_points_and_lines(a_x, a_y, a_z):
             y2 = point_2d[1][0] * scale + origin[1]
 
             pygame.draw.line(window, (128, 128, 128), (x1, y1), (x2, y2), 2)
-    
+
     for point in eye_points:
         *point, color = point
         if color is not None and SHOW_EYE_POINTS:
@@ -147,7 +151,7 @@ def draw_points_and_lines(a_x, a_y, a_z):
             x = point_2d[0][0] * scale + origin[0]
             y = point_2d[1][0] * scale + origin[1]
             pygame.draw.circle(window, color, (x, y), 2)
-    
+
     for line in eye_lines:
         # same rotation as above
         *p1, color = eye_points[line[0]]
@@ -188,7 +192,6 @@ def add_rotation_text(a_x, a_y, a_z):
     # add origin text line
     text = font.render("Origin: " + str(origin[0]) + ", " + str(origin[1]), 1, (255, 255, 255))
     window.blit(text, (10, 40))
-
 
 
 # some display options
@@ -237,7 +240,7 @@ def handle_events():
                 origin_y_moving = '-'
             if event.key == pygame.K_s:
                 origin_y_moving = '+'
-            
+
             # hide/show layers
             if event.key == pygame.K_p:
                 SHOW_POINTS = not SHOW_POINTS
@@ -247,7 +250,7 @@ def handle_events():
                 SHOW_EYE_POINTS = not SHOW_EYE_POINTS
             if event.key == pygame.K_r:
                 SHOW_EYE_LINES = not SHOW_EYE_LINES
-            
+
         if event.type == pygame.KEYUP:
             # stop rotating
             if event.key == pygame.K_LEFT:
@@ -268,7 +271,7 @@ def handle_events():
                 origin_y_moving = False
             if event.key == pygame.K_s:
                 origin_y_moving = False
-    
+
     # adjust rotation
     if a_x_moving == '+':
         a_x += adjustment
@@ -278,7 +281,7 @@ def handle_events():
         a_y += adjustment
     if a_y_moving == '-':
         a_y -= adjustment
-    
+
     # adjust origin
     origin_offset = 10
     if origin_x_moving == '+':
@@ -290,6 +293,7 @@ def handle_events():
     if origin_y_moving == '-':
         origin[1] -= origin_offset
 
+
 def main():
     height_between_planes = 3
     # add 26x4 planes
@@ -298,7 +302,7 @@ def main():
             add_plane(c*2, 0 + row*height_between_planes, 0, 2)
             add_plane(c*2, 0 + row*height_between_planes, 1, 2)
             add_plane(c*2, 0 + row*height_between_planes, 2, 2)
-    
+
     eye_pattern = eyes[0]
     current_char = 0
     row = 0
@@ -314,7 +318,7 @@ def main():
         clock.tick(30)
 
         handle_events()
-        
+
         window.fill((0, 0, 0))
         draw_points_and_lines(a_x, a_y, a_z)
         add_rotation_text(a_x, a_y, a_z)
