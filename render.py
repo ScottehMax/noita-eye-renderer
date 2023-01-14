@@ -93,7 +93,6 @@ def add_eye(x, y, z, eye, size, height):
 # projects a 3d point to 2d for display
 proj_matrix = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 0]])
 
-scale = 20
 origin = [400, 400]
 
 
@@ -194,16 +193,45 @@ def add_rotation_text(a_x, a_y, a_z):
     window.blit(text, (10, 40))
 
 
+def add_guide_text():
+    """Adds text to the screen describing the controls.
+    """
+
+    t = [
+        "Up/Down: Rotate around x axis",
+        "Left/Right: Rotate around y axis",
+        "Q/E: Rotate around z axis",
+        "X/Z: Scale up/down",
+        "WASD: Move origin",
+        "L: Toggle planes",
+        "T: Toggle eye points",
+        "R: Toggle eye lines",
+        "H: Toggle these instructions"
+    ]
+    font = pygame.font.SysFont("Arial", 20)
+    text = font.render("Controls:", 1, (255, 255, 255))
+    window.blit(text, (10, window.get_height() - 10 - (len(t) * 28)))
+
+    f2 = pygame.font.SysFont("Arial", 15)
+    for i, line in enumerate(t):
+        text = f2.render(line, 1, (255, 255, 255))
+        window.blit(text, (10, window.get_height() - 10 - (len(t) * 25) + (i * 25)))
+
+
 # some display options
 SHOW_POINTS = False
 SHOW_PLANES = True
 SHOW_EYE_POINTS = False
 SHOW_EYE_LINES = False
+SHOW_GUIDE_TEXT = True
 a_x = 0
 a_y = 0
 a_z = 0
+scale = 20
 a_x_moving = False
 a_y_moving = False
+a_z_moving = False
+scale_moving = False
 origin_x_moving = False
 origin_y_moving = False
 
@@ -212,9 +240,9 @@ adjustment = 0.02
 def handle_events():
     """Yeah, this one is a burning dumpster fire. Sorry.
     """
-    global SHOW_POINTS, SHOW_PLANES, SHOW_EYE_POINTS, SHOW_EYE_LINES
-    global a_x, a_y, a_z
-    global a_x_moving, a_y_moving, origin_x_moving, origin_y_moving
+    global SHOW_POINTS, SHOW_PLANES, SHOW_EYE_POINTS, SHOW_EYE_LINES, SHOW_GUIDE_TEXT
+    global a_x, a_y, a_z, scale
+    global a_x_moving, a_y_moving, a_z_moving, scale_moving, origin_x_moving, origin_y_moving
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
@@ -230,6 +258,16 @@ def handle_events():
                 a_x_moving = '+'
             if event.key == pygame.K_DOWN:
                 a_x_moving = '-'
+            if event.key == pygame.K_q:
+                a_z_moving = '+'
+            if event.key == pygame.K_e:
+                a_z_moving = '-'
+
+            # zoom
+            if event.key == pygame.K_z:
+                scale_moving = '-'
+            if event.key == pygame.K_x:
+                scale_moving = '+'
 
             # strafe
             if event.key == pygame.K_a:
@@ -246,10 +284,12 @@ def handle_events():
                 SHOW_POINTS = not SHOW_POINTS
             if event.key == pygame.K_l:
                 SHOW_PLANES = not SHOW_PLANES
-            if event.key == pygame.K_e:
+            if event.key == pygame.K_t:
                 SHOW_EYE_POINTS = not SHOW_EYE_POINTS
             if event.key == pygame.K_r:
                 SHOW_EYE_LINES = not SHOW_EYE_LINES
+            if event.key == pygame.K_h:
+                SHOW_GUIDE_TEXT = not SHOW_GUIDE_TEXT
 
         if event.type == pygame.KEYUP:
             # stop rotating
@@ -261,6 +301,16 @@ def handle_events():
                 a_x_moving = False
             if event.key == pygame.K_DOWN:
                 a_x_moving = False
+            if event.key == pygame.K_q:
+                a_z_moving = False
+            if event.key == pygame.K_e:
+                a_z_moving = False
+            
+            # stop zooming
+            if event.key == pygame.K_z:
+                scale_moving = False
+            if event.key == pygame.K_x:
+                scale_moving = False
 
             # stop strafing
             if event.key == pygame.K_a:
@@ -281,6 +331,17 @@ def handle_events():
         a_y += adjustment
     if a_y_moving == '-':
         a_y -= adjustment
+    if a_z_moving == '+':
+        a_z += adjustment
+    if a_z_moving == '-':
+        a_z -= adjustment
+
+    # adjust scale
+    scale_offset = 1
+    if scale_moving == '+':
+        scale += scale_offset
+    if scale_moving == '-' and scale > 1:
+        scale -= scale_offset
 
     # adjust origin
     origin_offset = 10
@@ -296,13 +357,15 @@ def handle_events():
 
 def main():
     height_between_planes = 3
+    eye_spacing = 2.5
     # add 26x4 planes
     for row in range(4):
         for c in range(26):
-            add_plane(c*2, 0 + row*height_between_planes, 0, 2)
-            add_plane(c*2, 0 + row*height_between_planes, 1, 2)
-            add_plane(c*2, 0 + row*height_between_planes, 2, 2)
+            add_plane(c*eye_spacing, 0 + row*height_between_planes, 0, 2)
+            add_plane(c*eye_spacing, 0 + row*height_between_planes, 1, 2)
+            add_plane(c*eye_spacing, 0 + row*height_between_planes, 2, 2)
 
+    hs_c = ["310", "231"]
     eye_pattern = eyes[0]
     current_char = 0
     row = 0
@@ -311,7 +374,7 @@ def main():
             current_char = 0
             row += 1
 
-        add_eye(current_char*2, 0 + row*height_between_planes, 0, eye, 2, 1)
+        add_eye(current_char*eye_spacing, 0 + row*height_between_planes, 0, eye, 2, 1)
         current_char += 1
 
     while True:
@@ -322,6 +385,8 @@ def main():
         window.fill((0, 0, 0))
         draw_points_and_lines(a_x, a_y, a_z)
         add_rotation_text(a_x, a_y, a_z)
+        if SHOW_GUIDE_TEXT:
+            add_guide_text()
         pygame.display.update()
 
 
