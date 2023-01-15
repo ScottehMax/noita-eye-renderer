@@ -27,6 +27,8 @@ eyes = [
     ["113", "231", "010", "144", "300", "204", "002", "220", "104", "130", "002", "210", "014", "030", "214", "033", "233", "003", "121", "010", "142", "113", "041", "214", "134", "033", "103", "301", "214", "114", "220", "223", "304", "102", "022", "204", "010", "144", "143", "204", "210", "202", "222", "242", "234", "020", "212", "042", "213", "143", "232", "203", "012", "114", "112", "110", "111", "034", "101", "013", "114", "141", "012", "110", "241", "210", "114", "300", "204", "014", "011", "220", "010", "043", "100", "140", "132", "310", "100", "022", "042", "301", "040", "201", "222", "041", "130", "014", "131", "020", "134", "243", "013", "113", "240", "243", "011", "111", "041", "242", "010", "130", "221", "201", "132", "231", "224", "244", "221", "100", "223", "132", "044", "131" ]
 ]
 
+pattern_names = ["east-1", "west-1", "east-2", "west-2", "east-3", "west-3", "east-4", "west-4", "east-5"]
+
 points = []
 lines = []
 eye_points = []
@@ -192,7 +194,8 @@ def add_rotation_text(a_x, a_y, a_z):
     text = font.render("Origin: " + str(origin[0]) + ", " + str(origin[1]), 1, (255, 255, 255))
     window.blit(text, (10, 40))
     # add pattern text line
-    text = font.render("Pattern: " + str(current_pattern), 1, (255, 255, 255))
+    pattern_name = pattern_names[current_pattern]
+    text = font.render("Pattern: " + pattern_name, 1, (255, 255, 255))
     window.blit(text, (10, 70))
 
 
@@ -227,7 +230,7 @@ def add_guide_text():
 SHOW_POINTS = False
 SHOW_PLANES = True
 SHOW_EYE_POINTS = False
-SHOW_EYE_LINES = False
+SHOW_EYE_LINES = True
 SHOW_GUIDE_TEXT = True
 a_x = 0
 a_y = 0
@@ -414,7 +417,7 @@ def main():
     display_eye_pattern(eye_pattern)
 
     while True:
-        clock.tick(30)
+        clock.tick(60)
 
         handle_events()
 
