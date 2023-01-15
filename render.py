@@ -191,6 +191,9 @@ def add_rotation_text(a_x, a_y, a_z):
     # add origin text line
     text = font.render("Origin: " + str(origin[0]) + ", " + str(origin[1]), 1, (255, 255, 255))
     window.blit(text, (10, 40))
+    # add pattern text line
+    text = font.render("Pattern: " + str(current_pattern), 1, (255, 255, 255))
+    window.blit(text, (10, 70))
 
 
 def add_guide_text():
@@ -208,6 +211,7 @@ def add_guide_text():
         "R: Toggle eye lines",
         "H: Toggle these instructions", 
         "0: Reset rotation",
+        "1/2: Change eye pattern",
     ]
     font = pygame.font.SysFont("Arial", 20)
     text = font.render("Controls:", 1, (255, 255, 255))
@@ -235,6 +239,7 @@ a_z_moving = False
 scale_moving = False
 origin_x_moving = False
 origin_y_moving = False
+current_pattern = 0
 
 adjustment = 0.02
 
@@ -242,7 +247,7 @@ def handle_events():
     """Yeah, this one is a burning dumpster fire. Sorry.
     """
     global SHOW_POINTS, SHOW_PLANES, SHOW_EYE_POINTS, SHOW_EYE_LINES, SHOW_GUIDE_TEXT
-    global a_x, a_y, a_z, scale, origin
+    global a_x, a_y, a_z, scale, origin, current_pattern
     global a_x_moving, a_y_moving, a_z_moving, scale_moving, origin_x_moving, origin_y_moving
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -299,6 +304,16 @@ def handle_events():
                 a_z = 0
                 scale = 20
                 origin[0], origin[1] = 400, 400
+            
+            # change pattern
+            if event.key == pygame.K_1:
+                if current_pattern > 0:
+                    current_pattern -= 1
+                    display_eye_pattern(eyes[current_pattern])
+            if event.key == pygame.K_2:
+                if current_pattern < len(eyes) - 1:
+                    current_pattern += 1
+                    display_eye_pattern(eyes[current_pattern])
 
         if event.type == pygame.KEYUP:
             # stop rotating
@@ -364,7 +379,14 @@ def handle_events():
         origin[1] -= origin_offset
 
 
-def main():
+def display_eye_pattern(eye_pattern):
+    # first, reset
+    global points, lines, eye_points, eye_lines
+    points = []
+    lines = []
+    eye_points = []
+    eye_lines = []
+
     height_between_planes = 3
     eye_spacing = 2.5
     # add 26x4 planes
@@ -374,8 +396,6 @@ def main():
             add_plane(c*eye_spacing, 0 + row*height_between_planes, 1, 2)
             add_plane(c*eye_spacing, 0 + row*height_between_planes, 2, 2)
 
-    hs_c = ["310", "231"]
-    eye_pattern = eyes[0]
     current_char = 0
     row = 0
     for eye in eye_pattern:
@@ -385,6 +405,13 @@ def main():
 
         add_eye(current_char*eye_spacing, 0 + row*height_between_planes, 0, eye, 2, 1)
         current_char += 1
+
+
+def main():
+    hs_c = ["310", "231"]
+    eye_pattern = eyes[0]
+
+    display_eye_pattern(eye_pattern)
 
     while True:
         clock.tick(30)
