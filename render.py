@@ -65,7 +65,15 @@ eye_pattern = {
 }
 
 # order to display each eye in a trigram
-eye_order = [0, 1, 2]
+eye_orders = [
+  [0, 1, 2],
+  [0, 2, 1],
+  [1, 0, 2],
+  [1, 2, 0],
+  [2, 0, 1],
+  [2, 1, 0]
+]
+eye_order_idx = 0
 
 
 def add_eye(x, y, z, eye, size, height):
@@ -81,11 +89,11 @@ def add_eye(x, y, z, eye, size, height):
     """
     eye = [list(map(int, i)) for i in eye]
     for i in range(len(eye)):
-        j = eye_order[i]
+        j = eye_orders[eye_order_idx][i]
         # lookup the pattern
         pattern = eye_pattern[eye[j][0]]
         # add the point
-        eye_points.append([[x + pattern[0]], [y + pattern[1]], [z + (2-j)*height], (0, 0, 255)])
+        eye_points.append([[x + pattern[0]], [y + pattern[1]], [z + (2-i)*height], (0, 0, 255)])
     # add 2 lines, connecting the points
     eye_lines.append([len(eye_points) - 3, len(eye_points) - 2])
     eye_lines.append([len(eye_points) - 2, len(eye_points) - 1])
@@ -194,7 +202,8 @@ def add_rotation_text(a_x, a_y, a_z):
     line = (
         "Origin: " + str(origin[0]) + ", " + str(origin[1]) + " | "
         + "Scale: " + str(scale) + " | "
-        + "Spacing: " + str(round(eye_spacing, 2))
+        + "Spacing: " + str(round(eye_spacing, 2)) + " | "
+        + "Order: " + str(eye_orders[eye_order_idx]) + " | "
     )
     text = font.render(line, 1, (255, 255, 255))
     window.blit(text, (10, 40))
@@ -224,6 +233,7 @@ def add_guide_text():
         "0: Reset rotation",
         "1/2: Change eye pattern",
         "3/4: Change eye spacing",
+        "5/6: Change eye display order",
     ]
     font = pygame.font.SysFont("Arial", 20)
     text = font.render("Controls:", 1, (255, 255, 255))
@@ -266,7 +276,7 @@ def handle_events():
     """Yeah, this one is a burning dumpster fire. Sorry.
     """
     global SHOW_POINTS, SHOW_PLANES, SHOW_EYE_POINTS, SHOW_EYE_LINES, SHOW_GUIDE_TEXT
-    global a_x, a_y, a_z, scale, origin, current_pattern, holding_shift, eye_spacing
+    global a_x, a_y, a_z, scale, origin, current_pattern, holding_shift, eye_spacing, eye_order_idx
     global a_x_moving, a_y_moving, a_z_moving, scale_moving, origin_x_moving, origin_y_moving
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -345,6 +355,16 @@ def handle_events():
             if event.key == pygame.K_4:
                 eye_spacing += 0.1
                 display_eye_pattern(eyes[current_pattern])
+            
+            # modify eye order
+            if event.key == pygame.K_5:
+                if eye_order_idx > 0:
+                    eye_order_idx -= 1
+                    display_eye_pattern(eyes[current_pattern])
+            if event.key == pygame.K_6:
+                if eye_order_idx < len(eye_orders) - 1:
+                    eye_order_idx += 1
+                    display_eye_pattern(eyes[current_pattern])
 
         if event.type == pygame.KEYUP:
             # stop rotating
