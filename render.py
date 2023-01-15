@@ -206,7 +206,8 @@ def add_guide_text():
         "L: Toggle planes",
         "T: Toggle eye points",
         "R: Toggle eye lines",
-        "H: Toggle these instructions"
+        "H: Toggle these instructions", 
+        "0: Reset rotation",
     ]
     font = pygame.font.SysFont("Arial", 20)
     text = font.render("Controls:", 1, (255, 255, 255))
@@ -241,7 +242,7 @@ def handle_events():
     """Yeah, this one is a burning dumpster fire. Sorry.
     """
     global SHOW_POINTS, SHOW_PLANES, SHOW_EYE_POINTS, SHOW_EYE_LINES, SHOW_GUIDE_TEXT
-    global a_x, a_y, a_z, scale
+    global a_x, a_y, a_z, scale, origin
     global a_x_moving, a_y_moving, a_z_moving, scale_moving, origin_x_moving, origin_y_moving
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -290,6 +291,14 @@ def handle_events():
                 SHOW_EYE_LINES = not SHOW_EYE_LINES
             if event.key == pygame.K_h:
                 SHOW_GUIDE_TEXT = not SHOW_GUIDE_TEXT
+
+            # reset view
+            if event.key == pygame.K_0:
+                a_x = 0
+                a_y = 0
+                a_z = 0
+                scale = 20
+                origin[0], origin[1] = 400, 400
 
         if event.type == pygame.KEYUP:
             # stop rotating
