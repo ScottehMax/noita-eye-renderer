@@ -9,7 +9,7 @@ hack to get something working.
 
 import pygame
 import numpy as np
-from math import sin, cos
+from math import sin, cos, pi
 
 pygame.init()
 window = pygame.display.set_mode((1100, 800))
@@ -191,7 +191,12 @@ def add_rotation_text(a_x, a_y, a_z):
     text = font.render("Rotation: " + str(a_x) + ", " + str(a_y) + ", " + str(a_z), 1, (255, 255, 255))
     window.blit(text, (10, 10))
     # add origin text line
-    text = font.render("Origin: " + str(origin[0]) + ", " + str(origin[1]), 1, (255, 255, 255))
+    line = (
+        "Origin: " + str(origin[0]) + ", " + str(origin[1]) + " | "
+        + "Scale: " + str(scale) + " | "
+        + "Spacing: " + str(round(eye_spacing, 2))
+    )
+    text = font.render(line, 1, (255, 255, 255))
     window.blit(text, (10, 40))
     # add pattern text line
     pattern_name = pattern_names[current_pattern]
@@ -212,9 +217,13 @@ def add_guide_text():
         "L: Toggle planes",
         "T: Toggle eye points",
         "R: Toggle eye lines",
+    ]
+    t2 = [
+        "Shift+Rotation: Move by 45 degrees",
         "H: Toggle these instructions", 
         "0: Reset rotation",
         "1/2: Change eye pattern",
+        "3/4: Change eye spacing",
     ]
     font = pygame.font.SysFont("Arial", 20)
     text = font.render("Controls:", 1, (255, 255, 255))
@@ -224,6 +233,11 @@ def add_guide_text():
     for i, line in enumerate(t):
         text = f2.render(line, 1, (255, 255, 255))
         window.blit(text, (10, window.get_height() - 10 - (len(t) * 25) + (i * 25)))
+
+    # move a column along
+    for i, line in enumerate(t2):
+        text = f2.render(line, 1, (255, 255, 255))
+        window.blit(text, (10 + 200, window.get_height() - 10 - (len(t2) * 25) + (i * 25)))
 
 
 # some display options
@@ -236,6 +250,7 @@ a_x = 0
 a_y = 0
 a_z = 0
 scale = 20
+holding_shift = False
 a_x_moving = False
 a_y_moving = False
 a_z_moving = False
@@ -243,6 +258,7 @@ scale_moving = False
 origin_x_moving = False
 origin_y_moving = False
 current_pattern = 0
+eye_spacing = 2.5
 
 adjustment = 0.02
 
@@ -250,7 +266,7 @@ def handle_events():
     """Yeah, this one is a burning dumpster fire. Sorry.
     """
     global SHOW_POINTS, SHOW_PLANES, SHOW_EYE_POINTS, SHOW_EYE_LINES, SHOW_GUIDE_TEXT
-    global a_x, a_y, a_z, scale, origin, current_pattern
+    global a_x, a_y, a_z, scale, origin, current_pattern, holding_shift, eye_spacing
     global a_x_moving, a_y_moving, a_z_moving, scale_moving, origin_x_moving, origin_y_moving
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -271,6 +287,10 @@ def handle_events():
                 a_z_moving = '+'
             if event.key == pygame.K_e:
                 a_z_moving = '-'
+
+            # rotation modifier
+            if event.key == pygame.K_LSHIFT:
+                holding_shift = True
 
             # zoom
             if event.key == pygame.K_z:
@@ -317,6 +337,14 @@ def handle_events():
                 if current_pattern < len(eyes) - 1:
                     current_pattern += 1
                     display_eye_pattern(eyes[current_pattern])
+            
+            # modify eye spacing
+            if event.key == pygame.K_3:
+                eye_spacing -= 0.1
+                display_eye_pattern(eyes[current_pattern])
+            if event.key == pygame.K_4:
+                eye_spacing += 0.1
+                display_eye_pattern(eyes[current_pattern])
 
         if event.type == pygame.KEYUP:
             # stop rotating
@@ -332,6 +360,10 @@ def handle_events():
                 a_z_moving = False
             if event.key == pygame.K_e:
                 a_z_moving = False
+            
+            # stop rotation modifier
+            if event.key == pygame.K_LSHIFT:
+                holding_shift = False
             
             # stop zooming
             if event.key == pygame.K_z:
@@ -350,6 +382,10 @@ def handle_events():
                 origin_y_moving = False
 
     # adjust rotation
+    if holding_shift:
+        adjustment = pi/4
+    else:
+        adjustment = 0.02
     if a_x_moving == '+':
         a_x += adjustment
     if a_x_moving == '-':
@@ -362,6 +398,9 @@ def handle_events():
         a_z += adjustment
     if a_z_moving == '-':
         a_z -= adjustment
+    if holding_shift:
+        # we don't want continuous movement if we're moving large amounts...
+        a_x_moving = a_y_moving = a_z_moving = False
 
     # adjust scale
     scale_offset = 1
@@ -391,7 +430,6 @@ def display_eye_pattern(eye_pattern):
     eye_lines = []
 
     height_between_planes = 3
-    eye_spacing = 2.5
     # add 26x4 planes
     for row in range(4):
         for c in range(26):
