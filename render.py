@@ -6,6 +6,7 @@ not very well documented. It's not very well tested. It's not very
 well thought out. It's not very well anything. It's just a quick
 hack to get something working.
 """
+import os
 from configparser import ConfigParser
 from math import cos, pi, sin
 from typing import Any, List, Optional, Tuple, Union
@@ -714,7 +715,7 @@ arial15 = pygame.font.SysFont("Arial", 15)
 arial20 = pygame.font.SysFont("Arial", 20)
 arial30 = pygame.font.SysFont("Arial", 30)
 
-cfg, cfgtext = load_config('config.ini')
+cfg, cfgtext = load_config(os.path.join(os.path.dirname(__file__), 'config.ini'))
 
 
 def main():
