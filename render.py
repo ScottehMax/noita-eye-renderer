@@ -48,33 +48,10 @@ class Point:
         """
         self.location = np.array([x, y, z])
         self.color = color
-    
-    def rotate(self, rotation: np.ndarray) -> "Point":
-        """Rotates the point around each axis by the given angle. Returns a new point.
-        
-        Args:
-            rotation (np.ndarray): Rotation matrix
-        
-        Returns:
-            Point: Rotated point
-        """
-        rotated = rotation @ self.location
-        return Point(rotated[0], rotated[1], rotated[2], self.color)
-    
-    def project(self, scale: Number, origin: List[int]) -> np.ndarray:
-        """Projects the point onto the 2D plane. Returns X and Y coordinates.
-        
-        Args:
-            scale (Number): Scale of the projection
-            origin (List[int]): Origin of the projection
-        
-        Returns:
-            np.ndarray: The projected point"""
-        return np.array([self.location[0] * scale + origin[0], self.location[1] * scale + origin[1]])
-    
+
     def __repr__(self):
         return f"Point({self.location[0]}, {self.location[1]}, {self.location[2]}, {self.color})"
-    
+
 
 class Line:
     def __init__(self, p1: Point, p2: Point, color: Optional[Color]=(128, 128, 128)):
@@ -88,18 +65,7 @@ class Line:
         self.p1 = p1
         self.p2 = p2
         self.color = color
-    
-    def rotate(self, rotation: np.ndarray) -> "Line":
-        """Rotates the line around each axis by the given angle. Returns a new line.
-        
-        Args:
-            rotation (np.ndarray): Rotation matrix
-        
-        Returns:
-            Line: Rotated line
-        """
-        return Line(self.p1.rotate(rotation), self.p2.rotate(rotation))
-    
+
     def __repr__(self):
         return f"Line({self.p1}, {self.p2})"
 
@@ -215,7 +181,7 @@ def add_eye_new(x: Number, y: Number, z: Number, eye_str: str, size: Number, h_s
                 eye_points.append(Point(x + pattern[0], y + size//2 + pattern[1], z - i*height, (0, 0, 255)))
             elif i == 2:
                 eye_points.append(Point(x + size//2 + h_spacing + pattern[0], y + pattern[1], z - i*height, (0, 0, 255)))
-                
+
     # add 2 lines, connecting the points
     eye_lines.append(Line(eye_points[-3], eye_points[-2]))
     eye_lines.append(Line(eye_points[-2], eye_points[-1]))
@@ -261,7 +227,7 @@ def add_eye_planes_new(x: Number, y: Number, z: Number, size: Number, h_spacing:
         add_plane(x + size + h_spacing*2, y + size//2, z, 2)
         add_plane(x, y + size//2, z-plane_height, 2)
         add_plane(x + size//2 + h_spacing, y, z-plane_height*2, 2)
-        
+
 
 
 def draw_points_and_lines(a_x: Number, a_y: Number, a_z: Number):
@@ -290,31 +256,31 @@ def draw_points_and_lines(a_x: Number, a_y: Number, a_z: Number):
     if SHOW_POINTS:
         for point in points:
             if point.color is not None:
-                p2 = point.rotate(rotation)
-                x, y = p2.project(scale, origin)
+                p2 = rotation @ point.location
+                x, y = p2[0] * scale + origin[0], p2[1] * scale + origin[1]
                 pygame.draw.circle(window, point.color, (x, y), 2)
-    
+
     if SHOW_PLANES:
         for line in lines:
-            p1 = line.p1.rotate(rotation)
-            p2 = line.p2.rotate(rotation)
-            x1, y1 = p1.project(scale, origin)
-            x2, y2 = p2.project(scale, origin)
+            p1 = rotation @ line.p1.location
+            p2 = rotation @ line.p2.location
+            x1, y1 = p1[0] * scale + origin[0], p1[1] * scale + origin[1]
+            x2, y2 = p2[0] * scale + origin[0], p2[1] * scale + origin[1]
             pygame.draw.line(window, line.color, (x1, y1), (x2, y2), 2)
-    
+
     if SHOW_EYE_POINTS:
         for point in eye_points:
             if point.color is not None:
-                p2 = point.rotate(rotation)
-                x, y = p2.project(scale, origin)
+                p2 = rotation @ point.location
+                x, y = p2[0] * scale + origin[0], p2[1] * scale + origin[1]
                 pygame.draw.circle(window, point.color, (x, y), 2)
-    
+
     if SHOW_EYE_LINES:
         for line in eye_lines:
-            p1 = line.p1.rotate(rotation)
-            p2 = line.p2.rotate(rotation)
-            x1, y1 = p1.project(scale, origin)
-            x2, y2 = p2.project(scale, origin)
+            p1 = rotation @ line.p1.location
+            p2 = rotation @ line.p2.location
+            x1, y1 = p1[0] * scale + origin[0], p1[1] * scale + origin[1]
+            x2, y2 = p2[0] * scale + origin[0], p2[1] * scale + origin[1]
             pygame.draw.line(window, (255, 255, 255), (x1, y1), (x2, y2), 2)
 
 
@@ -409,7 +375,7 @@ def load_config(fn) -> Tuple[dict[str, Any], dict[str, str]]:
 
     Args:
         fn (str): filename
-    
+
     Returns:
         Tuple[dict[str, Any], dict[str, str]]: (fixed_dict, str_dict)
     """
@@ -486,7 +452,7 @@ def handle_events():
                 a_z = 0
                 scale = 20
                 origin[0], origin[1] = 400, 400
-            
+
             # change pattern
             elif event.key == cfg['decrease_pattern']:
                 if current_pattern > 0:
@@ -496,7 +462,7 @@ def handle_events():
                 if current_pattern < len(eyes) - 1:
                     current_pattern += 1
                     display_eye_pattern(eyes[current_pattern])
-            
+
             # modify eye spacing
             elif event.key == cfg['decrease_spacing_x']:
                 eye_spacing_x -= 1 if holding_shift else 0.1
@@ -516,7 +482,7 @@ def handle_events():
             elif event.key == cfg['increase_spacing_z']:
                 eye_spacing_z += 1 if holding_shift else 0.1
                 display_eye_pattern(eyes[current_pattern])
-            
+
             # modify eye order
             elif event.key == cfg['decrease_order']:
                 if eye_order_idx > 0:
@@ -526,7 +492,7 @@ def handle_events():
                 if eye_order_idx < len(eye_orders) - 1:
                     eye_order_idx += 1
                     display_eye_pattern(eyes[current_pattern])
-            
+
             elif event.key == cfg['increase_mode']:
                 if display_mode < 1:
                     display_mode += 1
@@ -535,7 +501,7 @@ def handle_events():
                 if display_mode > 0:
                     display_mode -= 1
                     display_eye_pattern(eyes[current_pattern])
-                
+
             # quit
             elif event.key == cfg['quit']:
                 RUNNING = False
@@ -554,11 +520,11 @@ def handle_events():
                 a_z_moving = False
             elif event.key == cfg['move_z_negative']:
                 a_z_moving = False
-            
+
             # stop rotation modifier
             elif event.key in [pygame.K_LSHIFT, pygame.K_RSHIFT]:
                 holding_shift = False
-            
+
             # stop zooming
             elif event.key == cfg['increase_scale']:
                 scale_moving = False
@@ -660,14 +626,14 @@ def display_eye_pattern(eye_pattern):
         if current_char > 25:
             current_char = 0
             row += 1
-        
+
         if display_mode == 0:
             add_eye(
                 current_char*eye_size+current_char*eye_spacing_x,
                 row*2 + row*eye_spacing_y,
                 0,
                 eye,
-                2, 
+                2,
                 eye_spacing_z
             )
         elif display_mode == 1:
